@@ -10,6 +10,7 @@ import {
   Download,
   FileText,
   Home,
+  LogOut,
   Menu,
   Minus,
   MoreVertical,
@@ -24,11 +25,11 @@ import {
   TrendingUp,
   User,
   Wallet,
-  X
+  X,
 } from 'lucide-react';
 import { useState } from 'react';
 
-const LoginScreen = ({ onLogin }) => (
+const AuthScreen = ({ children }) => (
   <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center p-4">
     <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
       <div className="text-center mb-8">
@@ -38,27 +39,53 @@ const LoginScreen = ({ onLogin }) => (
         <h1 className="text-3xl font-bold text-gray-800">WarungKu</h1>
         <p className="text-gray-600">Aplikasi Manajemen Warung</p>
       </div>
+      {children}
+    </div>
+  </div>
+);
 
-      <div className="space-y-4">
+const LoginScreen = ({ onLogin, onNavigateToSignUp }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Logika login sederhana, ganti dengan API call
+    if (email === 'admin@warungku.com' && password === 'password') {
+      onLogin();
+    } else {
+      alert('Email atau password salah!');
+    }
+  };
+
+  return (
+    <AuthScreen>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
           <input
             type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="masukkan@email.com"
+            required
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
           <input
             type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder="••••••••"
+            required
           />
         </div>
 
         <button
-          onClick={onLogin}
+          type="submit"
           className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
         >
           Masuk
@@ -70,14 +97,81 @@ const LoginScreen = ({ onLogin }) => (
 
         <div className="text-center pt-4 border-t">
           <p className="text-sm text-gray-600 mb-2">Belum punya akun?</p>
-          <button className="text-blue-600 font-semibold hover:underline">
+          <button type="button" onClick={onNavigateToSignUp} className="text-blue-600 font-semibold hover:underline">
             Daftar Akun Baru
           </button>
         </div>
-      </div>
-    </div>
-  </div>
-);
+      </form>
+    </AuthScreen>
+  );
+};
+
+const SignUpScreen = ({ onSignUp, onNavigateToLogin }) => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Logika sign up sederhana
+    console.log('Mendaftarkan pengguna:', { name, email });
+    onSignUp(); // Anggap pendaftaran berhasil dan langsung login
+  };
+
+  return (
+    <AuthScreen>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Nama Lengkap</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="Nama Anda"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="masukkan@email.com"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="••••••••"
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+        >
+          Daftar
+        </button>
+
+        <div className="text-center pt-4 border-t">
+          <p className="text-sm text-gray-600 mb-2">Sudah punya akun?</p>
+          <button type="button" onClick={onNavigateToLogin} className="text-blue-600 font-semibold hover:underline">
+            Masuk di sini
+          </button>
+        </div>
+      </form>
+    </AuthScreen>
+  );
+};
 
 const Sidebar = ({ menuItems, currentScreen, onNavigate, onClose }) => (
   <div className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform lg:translate-x-0 lg:static lg:inset-0">
@@ -96,7 +190,7 @@ const Sidebar = ({ menuItems, currentScreen, onNavigate, onClose }) => (
       </button>
     </div>
 
-    <nav className="p-4">
+    <nav className="p-4 overflow-y-auto h-screen">
       {menuItems.map((item) => {
         const Icon = item.icon;
         return (
@@ -117,7 +211,7 @@ const Sidebar = ({ menuItems, currentScreen, onNavigate, onClose }) => (
   </div>
 );
 
-const Header = ({ menuItems, currentScreen, onMenuClick, lowStock }) => (
+const Header = ({ menuItems, currentScreen, onMenuClick, lowStock, onLogout }) => (
   <header className="bg-white shadow-sm border-b px-4 py-4 lg:px-6">
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-4">
@@ -131,7 +225,7 @@ const Header = ({ menuItems, currentScreen, onMenuClick, lowStock }) => (
           {menuItems.find(item => item.id === currentScreen)?.label || 'Dashboard'}
         </h2>
       </div>
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-6">
         <div className="relative">
           <Bell className="w-6 h-6 text-gray-600" />
           {lowStock > 0 && (
@@ -140,9 +234,15 @@ const Header = ({ menuItems, currentScreen, onMenuClick, lowStock }) => (
             </span>
           )}
         </div>
-        <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-          <User className="w-4 h-4 text-gray-600" />
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+            <User className="w-4 h-4 text-gray-600" />
+          </div>
+          <span className="hidden md:block text-sm font-medium text-gray-700">Admin</span>
         </div>
+        <button onClick={onLogout} className="text-gray-600 hover:text-red-500" title="Logout">
+          <LogOut className="w-6 h-6" />
+        </button>
       </div>
     </div>
   </header>
@@ -959,7 +1059,8 @@ const ContactsScreen = ({ showContactForm, setShowContactForm }) => (
 const WarungKuApp = () => {
   const [currentScreen, setCurrentScreen] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authScreen, setAuthScreen] = useState('login'); // 'login' or 'signup'
   const [selectedPeriod, setSelectedPeriod] = useState('bulanan');
   const [cartItems, setCartItems] = useState([
     { id: 1, name: 'Beras 5kg', price: 65000, qty: 2, subtotal: 130000 },
@@ -1092,7 +1193,13 @@ const WarungKuApp = () => {
   };
 
   if (!isLoggedIn) {
-    return <LoginScreen onLogin={() => setIsLoggedIn(true)} />;
+    if (authScreen === 'signup') {
+      return <SignUpScreen onSignUp={() => setIsLoggedIn(true)} onNavigateToLogin={() => setAuthScreen('login')} />;
+    }
+    return <LoginScreen
+      onLogin={() => setIsLoggedIn(true)}
+      onNavigateToSignUp={() => setAuthScreen('signup')}
+    />;
   }
 
   return (
@@ -1120,6 +1227,7 @@ const WarungKuApp = () => {
           currentScreen={currentScreen}
           onMenuClick={() => setSidebarOpen(true)}
           lowStock={lowStock}
+          onLogout={() => setIsLoggedIn(false)}
         />
         <main className="flex-1 overflow-y-auto">
           {renderScreen()}
