@@ -50,13 +50,23 @@ const LoginScreen = ({ onLogin, onNavigateToSignUp }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Logika login sederhana, ganti dengan API call
+    // --- SIMULASI API CALL ---
+    // Di aplikasi nyata, Anda akan mengirim email/password ke backend.
+    // Backend akan memvalidasi dan mengembalikan data pengguna.
+    let user = null;
     if (email === 'admin@warungku.com' && password === 'password') {
-      onLogin();
+      user = { id: 'user-001', nama: 'Admin Warung', email: 'admin@warungku.com', role: 'admin' };
+    } else if (email === 'karyawan@warungku.com' && password === 'password') {
+      user = { id: 'user-002', nama: 'Karyawan', email: 'karyawan@warungku.com', role: 'karyawan' };
+    }
+
+    if (user) {
+      onLogin(user); // Kirim seluruh objek user saat login berhasil
     } else {
       alert('Email atau password salah!');
     }
   };
+  // --- AKHIR SIMULASI ---
 
   return (
     <AuthScreen>
@@ -211,7 +221,7 @@ const Sidebar = ({ menuItems, currentScreen, onNavigate, onClose }) => (
   </div>
 );
 
-const Header = ({ menuItems, currentScreen, onMenuClick, lowStock, onLogout }) => (
+const Header = ({ menuItems, currentScreen, onMenuClick, lowStock, onLogout, currentUser }) => (
   <header className="bg-white shadow-sm border-b px-4 py-4 lg:px-6">
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-4">
@@ -238,7 +248,7 @@ const Header = ({ menuItems, currentScreen, onMenuClick, lowStock, onLogout }) =
           <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
             <User className="w-4 h-4 text-gray-600" />
           </div>
-          <span className="hidden md:block text-sm font-medium text-gray-700">Admin</span>
+          <span className="hidden md:block text-sm font-medium text-gray-700">{currentUser?.nama || 'Pengguna'}</span>
         </div>
         <button onClick={onLogout} className="text-gray-600 hover:text-red-500" title="Logout">
           <LogOut className="w-6 h-6" />
@@ -1059,7 +1069,7 @@ const ContactsScreen = ({ showContactForm, setShowContactForm }) => (
 const WarungKuApp = () => {
   const [currentScreen, setCurrentScreen] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null); // Ganti isLoggedIn dengan currentUser
   const [authScreen, setAuthScreen] = useState('login'); // 'login' or 'signup'
   const [selectedPeriod, setSelectedPeriod] = useState('bulanan');
   const [cartItems, setCartItems] = useState([
@@ -1081,27 +1091,36 @@ const WarungKuApp = () => {
   const pendingDebt = 850000;
   const lowStock = 3;
 
-  const menuItems = [
+  // Definisikan semua menu yang mungkin ada
+  const allMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'pos', label: 'Kasir/POS', icon: ShoppingCart },
+    { id: 'stock', label: 'Manajemen Stok', icon: Package },
     { id: 'debt', label: 'Utang & Piutang', icon: CreditCard },
     { id: 'bookkeeping', label: 'Pembukuan', icon: BookOpen },
-    { id: 'stock', label: 'Manajemen Stok', icon: Package },
     { id: 'reports', label: 'Laporan Usaha', icon: FileText },
+    { id: 'contacts', label: 'Kontak', icon: Phone },
+    { id: 'accounts', label: 'Saldo Kas & Bank', icon: Wallet },
     { id: 'reminders', label: 'Pengingat', icon: Bell },
     { id: 'receipt', label: 'Pengaturan Nota', icon: Settings },
     { id: 'business-card', label: 'Kartu Nama', icon: User },
-    { id: 'accounts', label: 'Saldo Kas & Bank', icon: Wallet },
-    { id: 'contacts', label: 'Kontak', icon: Phone }
+    // { id: 'manage-users', label: 'Manajemen Pengguna', icon: Users }, // Contoh menu khusus admin
   ];
+
+  // Filter menu berdasarkan peran pengguna
+  const menuItems = allMenuItems.filter(item => {
+    if (currentUser?.role === 'admin') {
+      return true; // Admin bisa lihat semua
+    }
+    if (currentUser?.role === 'karyawan') {
+      // Karyawan hanya bisa lihat menu tertentu
+      return ['pos', 'stock', 'contacts'].includes(item.id);
+    }
+    return false;
+  });
 
   const products = [
     { id: 1, name: 'Beras 5kg', stock: 25, minStock: 10, price: 65000, cost: 55000, category: 'Sembako', barcode: '8997123456789' },
-    { id: 2, name: 'Minyak Goreng 1L', stock: 8, minStock: 15, price: 18000, cost: 15000, category: 'Sembako', barcode: '8997123456790' },
-    { id: 3, name: 'Gula Pasir 1kg', stock: 30, minStock: 10, price: 15000, cost: 12000, category: 'Sembako', barcode: '8997123456791' },
-    { id: 4, name: 'Tepung Terigu 1kg', stock: 5, minStock: 10, price: 12000, cost: 9000, category: 'Sembako', barcode: '8997123456792' },
-    { id: 5, name: 'Kopi Sachet', stock: 100, minStock: 50, price: 2000, cost: 1500, category: 'Minuman', barcode: '8997123456793' },
-    { id: 6, name: 'Mie Instan', stock: 3, minStock: 20, price: 3000, cost: 2200, category: 'Makanan', barcode: '8997123456794' }
   ];
 
   // Helper functions
@@ -1141,6 +1160,12 @@ const WarungKuApp = () => {
   };
 
   const renderScreen = () => {
+    // Jika role karyawan mencoba mengakses halaman yang tidak diizinkan, arahkan ke halaman default mereka (misal: POS)
+    if (currentUser?.role === 'karyawan' && !menuItems.find(item => item.id === currentScreen)) {
+      setCurrentScreen('pos');
+      return null; // Render ulang akan terjadi
+    }
+
     switch (currentScreen) {
       case 'dashboard': return <Dashboard
         todaySales={todaySales}
@@ -1192,12 +1217,12 @@ const WarungKuApp = () => {
     }
   };
 
-  if (!isLoggedIn) {
+  if (!currentUser) { // Cek jika currentUser null
     if (authScreen === 'signup') {
-      return <SignUpScreen onSignUp={() => setIsLoggedIn(true)} onNavigateToLogin={() => setAuthScreen('login')} />;
+      return <SignUpScreen onSignUp={(user) => setCurrentUser(user)} onNavigateToLogin={() => setAuthScreen('login')} />;
     }
     return <LoginScreen
-      onLogin={() => setIsLoggedIn(true)}
+      onLogin={(user) => setCurrentUser(user)}
       onNavigateToSignUp={() => setAuthScreen('signup')}
     />;
   }
@@ -1227,7 +1252,8 @@ const WarungKuApp = () => {
           currentScreen={currentScreen}
           onMenuClick={() => setSidebarOpen(true)}
           lowStock={lowStock}
-          onLogout={() => setIsLoggedIn(false)}
+          onLogout={() => setCurrentUser(null)} // Set currentUser menjadi null saat logout
+          currentUser={currentUser}
         />
         <main className="flex-1 overflow-y-auto">
           {renderScreen()}
