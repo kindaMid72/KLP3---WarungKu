@@ -3,6 +3,7 @@ import {
   BarChart3,
   Bell,
   BookOpen,
+  Building,
   Calendar,
   Clock,
   CreditCard,
@@ -24,6 +25,7 @@ import {
   ToggleRight,
   TrendingUp,
   User,
+  Users,
   Wallet,
   X,
 } from 'lucide-react';
@@ -48,25 +50,25 @@ const LoginScreen = ({ onLogin, onNavigateToSignUp }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  // --- SIMULASI DATA DARI DATABASE (Hanya untuk referensi di komponen ini) ---
+  const mockUsers = [
+    { id: 'user-001', nama: 'Admin Warung', email: 'admin@warungku.com' },
+    { id: 'user-002', nama: 'Karyawan', email: 'karyawan@warungku.com' },
+    { id: 'user-003', nama: 'Multi Toko', email: 'multi@warungku.com' },
+  ];
+  // --- AKHIR SIMULASI ---
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    // --- SIMULASI API CALL ---
-    // Di aplikasi nyata, Anda akan mengirim email/password ke backend.
-    // Backend akan memvalidasi dan mengembalikan data pengguna.
-    let user = null;
-    if (email === 'admin@warungku.com' && password === 'password') {
-      user = { id: 'user-001', nama: 'Admin Warung', email: 'admin@warungku.com', role: 'admin' };
-    } else if (email === 'karyawan@warungku.com' && password === 'password') {
-      user = { id: 'user-002', nama: 'Karyawan', email: 'karyawan@warungku.com', role: 'karyawan' };
-    }
+    // Simulasi validasi login yang lebih dinamis
+    const user = mockUsers.find(u => u.email === email);
 
-    if (user) {
-      onLogin(user); // Kirim seluruh objek user saat login berhasil
+    if (user && password === 'password') { // Password disamakan untuk semua user demi kemudahan simulasi
+      onLogin(user);
     } else {
       alert('Email atau password salah!');
     }
   };
-  // --- AKHIR SIMULASI ---
 
   return (
     <AuthScreen>
@@ -183,6 +185,61 @@ const SignUpScreen = ({ onSignUp, onNavigateToLogin }) => {
   );
 };
 
+const StoreSelectionScreen = ({ userStores, onSelectStore, onNavigateToCreateStore, onLogout }) => (
+  <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
+    <div className="w-full max-w-md">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">Pilih Toko</h1>
+        <p className="text-gray-600">Pilih toko yang ingin Anda kelola.</p>
+      </div>
+      <div className="bg-white rounded-2xl shadow-xl p-6 space-y-3">
+        {userStores.map(store => (
+          <button
+            key={store.id}
+            onClick={() => onSelectStore(store)}
+            className="w-full text-left p-4 rounded-lg border hover:bg-gray-50 transition-colors flex items-center space-x-4"
+          >
+            <div className="bg-blue-100 p-3 rounded-full">
+              <Building className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-800">{store.nama}</p>
+              <p className="text-sm text-gray-500">Peran: <span className="capitalize font-medium">{store.role}</span></p>
+            </div>
+          </button>
+        ))}
+        <button
+          onClick={onNavigateToCreateStore}
+          className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+        >
+          Buat Toko Baru
+        </button>
+      </div>
+      <div className="text-center mt-6">
+        <button onClick={onLogout} className="text-gray-600 text-sm hover:underline">Logout</button>
+      </div>
+    </div>
+  </div>
+);
+
+const CreateStoreScreen = ({ onCreateStore }) => {
+  const [storeName, setStoreName] = useState('');
+  return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">Buat Toko Pertamamu</h1>
+        <p className="text-gray-600 mb-6">Masukkan nama toko atau warung Anda.</p>
+        <form onSubmit={(e) => { e.preventDefault(); onCreateStore(storeName); }} className="space-y-4">
+          <input type="text" value={storeName} onChange={e => setStoreName(e.target.value)} placeholder="Contoh: Warung Barokah" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required />
+          <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+            Buat Toko
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const Sidebar = ({ menuItems, currentScreen, onNavigate, onClose }) => (
   <div className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform lg:translate-x-0 lg:static lg:inset-0">
     <div className="flex items-center justify-between p-4 border-b lg:justify-center">
@@ -221,7 +278,7 @@ const Sidebar = ({ menuItems, currentScreen, onNavigate, onClose }) => (
   </div>
 );
 
-const Header = ({ menuItems, currentScreen, onMenuClick, lowStock, onLogout, currentUser }) => (
+const Header = ({ menuItems, currentScreen, onMenuClick, lowStock, onLogout, currentUser, selectedStore }) => (
   <header className="bg-white shadow-sm border-b px-4 py-4 lg:px-6">
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-4">
@@ -232,7 +289,7 @@ const Header = ({ menuItems, currentScreen, onMenuClick, lowStock, onLogout, cur
           <Menu className="w-6 h-6" />
         </button>
         <h2 className="text-xl font-semibold text-gray-800 capitalize">
-          {menuItems.find(item => item.id === currentScreen)?.label || 'Dashboard'}
+          {selectedStore?.nama} - {menuItems.find(item => item.id === currentScreen)?.label || 'Dashboard'}
         </h2>
       </div>
       <div className="flex items-center space-x-6">
@@ -1066,12 +1123,77 @@ const ContactsScreen = ({ showContactForm, setShowContactForm }) => (
   </div>
 );
 
+const UserManagementScreen = ({ storeUsers, onInviteUser, selectedStore }) => {
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserRole, setNewUserRole] = useState('karyawan');
+
+  const handleInvite = (e) => {
+    e.preventDefault();
+    if (!newUserEmail) return;
+    onInviteUser(newUserEmail, newUserRole);
+    setNewUserEmail('');
+    setNewUserRole('karyawan');
+  };
+
+  return (
+    <div className="p-4 lg:p-6">
+      <div className="bg-white rounded-xl shadow-sm border p-6">
+        <h3 className="text-lg font-semibold mb-4">Manajemen Pengguna untuk Toko "{selectedStore.nama}"</h3>
+
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+          <h4 className="text-md font-semibold mb-3">Tambah Pengguna Baru</h4>
+          <form onSubmit={handleInvite} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email Pengguna</label>
+              <input type="email" value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)} placeholder="email@pengguna.com" className="w-full px-3 py-2 border border-gray-300 rounded-lg" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Peran</label>
+              <select value={newUserRole} onChange={e => setNewUserRole(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                <option value="karyawan">Karyawan</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold h-fit">Undang Pengguna</button>
+          </form>
+        </div>
+
+        <h4 className="text-md font-semibold mb-2">Pengguna Terdaftar</h4>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-gray-50 text-gray-600">
+              <tr>
+                <th className="p-3">Nama</th>
+                <th className="p-3">Email</th>
+                <th className="p-3">Peran</th>
+              </tr>
+            </thead>
+            <tbody>
+              {storeUsers.map(user => (
+                <tr key={user.id} className="border-b">
+                  <td className="p-3 font-medium">{user.nama}</td>
+                  <td className="p-3">{user.email}</td>
+                  <td className="p-3 capitalize">{user.role}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const WarungKuApp = () => {
-  const [currentScreen, setCurrentScreen] = useState('dashboard');
+  // State untuk mengelola alur aplikasi
+  const [appState, setAppState] = useState('AUTH'); // AUTH, STORE_SELECTION, CREATE_STORE, APP
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userStores, setUserStores] = useState([]);
+  const [selectedStore, setSelectedStore] = useState(null);
+
+  const [currentScreen, setCurrentScreen] = useState('pos'); // Layar default setelah memilih toko
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null); // Ganti isLoggedIn dengan currentUser
   const [authScreen, setAuthScreen] = useState('login'); // 'login' or 'signup'
-  const [selectedPeriod, setSelectedPeriod] = useState('bulanan');
   const [cartItems, setCartItems] = useState([
     { id: 1, name: 'Beras 5kg', price: 65000, qty: 2, subtotal: 130000 },
     { id: 2, name: 'Minyak Goreng 1L', price: 18000, qty: 1, subtotal: 18000 }
@@ -1083,13 +1205,41 @@ const WarungKuApp = () => {
   const [showContactForm, setShowContactForm] = useState(false);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [selectedReport, setSelectedReport] = useState('penjualan');
+  const [selectedPeriod, setSelectedPeriod] = useState('bulanan');
   const [activeTab, setActiveTab] = useState('utang');
   const [customerPaid, setCustomerPaid] = useState('');
-  // Sample data
+
+  // --- SIMULASI DATA DARI DATABASE ---
+  const mockUsers = [
+    { id: 'user-001', nama: 'Admin Warung', email: 'admin@warungku.com' },
+    { id: 'user-002', nama: 'Karyawan', email: 'karyawan@warungku.com' },
+    { id: 'user-003', nama: 'Multi Toko', email: 'multi@warungku.com' },
+    { id: 'user-004', nama: 'Calon Karyawan', email: 'calon@warungku.com' },
+  ];
+  const mockStores = [
+    { id: 'store-01', nama: 'WarungKu Pusat' },
+    { id: 'store-02', nama: 'WarungKu Cabang BSD' },
+  ];
+  const [userStoreRelations, setUserStoreRelations] = useState([
+    { userId: 'user-001', storeId: 'store-01', role: 'admin' },
+    { userId: 'user-002', storeId: 'store-01', role: 'karyawan' },
+    { userId: 'user-003', storeId: 'store-01', role: 'admin' },
+    { userId: 'user-003', storeId: 'store-02', role: 'admin' },
+  ]);
+
   const todaySales = 2450000;
   const cashBalance = 5750000;
   const pendingDebt = 850000;
   const lowStock = 3;
+  // --- AKHIR SIMULASI DATA ---
+
+  const products = [
+    { id: 1, name: 'Beras 5kg', stock: 25, minStock: 10, price: 65000, cost: 55000, category: 'Sembako', barcode: '8997123456789' },
+    { id: 2, name: 'Minyak Goreng 1L', stock: 18, minStock: 5, price: 18000, cost: 16000, category: 'Sembako', barcode: '8997123456790' },
+    { id: 3, name: 'Gula Pasir 1kg', stock: 15, minStock: 5, price: 15000, cost: 13000, category: 'Sembako', barcode: '8997123456791' },
+    { id: 4, name: 'Indomie Goreng', stock: 40, minStock: 20, price: 3000, cost: 2500, category: 'Makanan', barcode: '8997123456792' },
+    { id: 5, name: 'Teh Botol', stock: 30, minStock: 10, price: 3500, cost: 2800, category: 'Minuman', barcode: '8997123456793' },
+  ];
 
   // Definisikan semua menu yang mungkin ada
   const allMenuItems = [
@@ -1104,24 +1254,80 @@ const WarungKuApp = () => {
     { id: 'reminders', label: 'Pengingat', icon: Bell },
     { id: 'receipt', label: 'Pengaturan Nota', icon: Settings },
     { id: 'business-card', label: 'Kartu Nama', icon: User },
-    // { id: 'manage-users', label: 'Manajemen Pengguna', icon: Users }, // Contoh menu khusus admin
+    { id: 'manage-users', label: 'Manajemen Pengguna', icon: Users },
   ];
 
   // Filter menu berdasarkan peran pengguna
-  const menuItems = allMenuItems.filter(item => {
-    if (currentUser?.role === 'admin') {
-      return true; // Admin bisa lihat semua
-    }
-    if (currentUser?.role === 'karyawan') {
-      // Karyawan hanya bisa lihat menu tertentu
-      return ['pos', 'stock', 'contacts'].includes(item.id);
-    }
-    return false;
-  });
+  const getMenuItemsForRole = (role) => {
+    return allMenuItems.filter(item => {
+      if (role === 'admin') {
+        return true; // Admin bisa lihat semua
+      }
+      if (role === 'karyawan') {
+        // Karyawan hanya bisa lihat menu tertentu
+        return ['pos', 'stock', 'contacts'].includes(item.id);
+      }
+      return false;
+    });
+  }
 
-  const products = [
-    { id: 1, name: 'Beras 5kg', stock: 25, minStock: 10, price: 65000, cost: 55000, category: 'Sembako', barcode: '8997123456789' },
-  ];
+  const menuItems = selectedStore ? getMenuItemsForRole(selectedStore.role) : [];
+
+  const handleLogin = (user) => {
+    setCurrentUser(user);
+    // Simulasi fetch data toko milik user
+    const storesForUser = userStoreRelations
+      .filter(rel => rel.userId === user.id)
+      .map(rel => {
+        const storeData = mockStores.find(s => s.id === rel.storeId);
+        return { ...storeData, role: rel.role };
+      });
+
+    setUserStores(storesForUser);
+
+    if (storesForUser.length === 0) {
+      setAppState('CREATE_STORE');
+    } else if (storesForUser.length === 1) {
+      setSelectedStore(storesForUser[0]);
+      setAppState('APP');
+    } else {
+      setAppState('STORE_SELECTION');
+    }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setSelectedStore(null);
+    setUserStores([]);
+    setAppState('AUTH');
+  };
+
+  const handleCreateStore = (storeName) => {
+    // Simulasi pembuatan toko
+    const newStore = { id: `store-${Date.now()}`, nama: storeName, role: 'admin' };
+    setSelectedStore(newStore);
+    setAppState('APP');
+    // Di aplikasi nyata, Anda juga akan menambahkan relasi user-toko ke database
+  };
+
+  const handleInviteUser = (email, role) => {
+    const userToInvite = mockUsers.find(u => u.email === email);
+    if (!userToInvite) {
+      alert(`Pengguna dengan email ${email} tidak ditemukan.`);
+      return;
+    }
+
+    const existingRelation = userStoreRelations.find(rel => rel.userId === userToInvite.id && rel.storeId === selectedStore.id);
+    if (existingRelation) {
+      alert(`Pengguna ${userToInvite.nama} sudah ada di toko ini.`);
+      return;
+    }
+
+    // Simulasi menambahkan relasi baru
+    const newRelation = { userId: userToInvite.id, storeId: selectedStore.id, role };
+    setUserStoreRelations([...userStoreRelations, newRelation]);
+    alert(`Pengguna ${userToInvite.nama} berhasil ditambahkan sebagai ${role}.`);
+  };
 
   // Helper functions
   const calculateChange = () => {
@@ -1160,10 +1366,23 @@ const WarungKuApp = () => {
   };
 
   const renderScreen = () => {
-    // Jika role karyawan mencoba mengakses halaman yang tidak diizinkan, arahkan ke halaman default mereka (misal: POS)
-    if (currentUser?.role === 'karyawan' && !menuItems.find(item => item.id === currentScreen)) {
+    const posProps = {
+      cartItems,
+      updateCartItem,
+      addToCart,
+      products,
+      getCartTotal,
+      customerPaid,
+      setCustomerPaid,
+      calculateChange,
+      paymentMethod,
+      setPaymentMethod,
+    };
+
+    // Jika role karyawan mencoba mengakses halaman yang tidak diizinkan, arahkan ke halaman default (POS)
+    if (selectedStore?.role === 'karyawan' && !menuItems.find(item => item.id === currentScreen)) {
       setCurrentScreen('pos');
-      return null; // Render ulang akan terjadi
+      return <POSScreen {...posProps} />;
     }
 
     switch (currentScreen) {
@@ -1173,18 +1392,7 @@ const WarungKuApp = () => {
         pendingDebt={pendingDebt}
         lowStock={lowStock}
       />;
-      case 'pos': return <POSScreen
-        cartItems={cartItems}
-        updateCartItem={updateCartItem}
-        addToCart={addToCart}
-        products={products}
-        getCartTotal={getCartTotal}
-        customerPaid={customerPaid}
-        setCustomerPaid={setCustomerPaid}
-        calculateChange={calculateChange}
-        paymentMethod={paymentMethod}
-        setPaymentMethod={setPaymentMethod}
-      />;
+      case 'pos': return <POSScreen {...posProps} />;
       case 'debt': return <DebtScreen
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -1207,6 +1415,15 @@ const WarungKuApp = () => {
       case 'business-card': return <BusinessCardScreen />;
       case 'accounts': return <AccountsScreen />;
       case 'contacts': return <ContactsScreen showContactForm={showContactForm} setShowContactForm={setShowContactForm} />;
+      case 'manage-users': {
+        const storeUsers = userStoreRelations
+          .filter(rel => rel.storeId === selectedStore.id)
+          .map(rel => {
+            const userData = mockUsers.find(u => u.id === rel.userId);
+            return { ...userData, role: rel.role };
+          });
+        return <UserManagementScreen storeUsers={storeUsers} onInviteUser={handleInviteUser} selectedStore={selectedStore} />;
+      }
       default:
         return <Dashboard
           todaySales={todaySales}
@@ -1217,14 +1434,40 @@ const WarungKuApp = () => {
     }
   };
 
-  if (!currentUser) { // Cek jika currentUser null
-    if (authScreen === 'signup') {
-      return <SignUpScreen onSignUp={(user) => setCurrentUser(user)} onNavigateToLogin={() => setAuthScreen('login')} />;
+  // Render berdasarkan state aplikasi
+  if (appState === 'AUTH') {
+    if (authScreen === 'login') {
+      return <LoginScreen
+        onLogin={handleLogin}
+        onNavigateToSignUp={() => setAuthScreen('signup')}
+      />;
+    } else {
+      return <SignUpScreen
+        onSignUp={() => {
+          // Simulasi: setelah daftar, user dibuat dan diarahkan untuk buat toko
+          const newUser = { id: `user-${Date.now()}`, nama: 'Pengguna Baru', email: 'baru@email.com', role: 'admin' };
+          setCurrentUser(newUser);
+          setAppState('CREATE_STORE');
+        }}
+        onNavigateToLogin={() => setAuthScreen('login')}
+      />;
     }
-    return <LoginScreen
-      onLogin={(user) => setCurrentUser(user)}
-      onNavigateToSignUp={() => setAuthScreen('signup')}
-    />;
+  }
+
+  if (appState === 'STORE_SELECTION') {
+    return <StoreSelectionScreen
+      userStores={userStores}
+      onSelectStore={(store) => {
+        setSelectedStore(store);
+        setAppState('APP');
+      }}
+      onNavigateToCreateStore={() => setAppState('CREATE_STORE')}
+      onLogout={handleLogout}
+    />
+  }
+
+  if (appState === 'CREATE_STORE') {
+    return <CreateStoreScreen onCreateStore={handleCreateStore} />
   }
 
   return (
@@ -1252,8 +1495,9 @@ const WarungKuApp = () => {
           currentScreen={currentScreen}
           onMenuClick={() => setSidebarOpen(true)}
           lowStock={lowStock}
-          onLogout={() => setCurrentUser(null)} // Set currentUser menjadi null saat logout
+          onLogout={handleLogout}
           currentUser={currentUser}
+          selectedStore={selectedStore}
         />
         <main className="flex-1 overflow-y-auto">
           {renderScreen()}
